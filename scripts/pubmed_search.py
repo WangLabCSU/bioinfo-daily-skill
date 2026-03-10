@@ -355,6 +355,23 @@ def generate_daily_report(articles: List[Dict], date: str) -> str:
     
     return "\n".join(report)
 
+def save_markdown_report(report_text: str, date: str) -> str:
+    """保存为 Markdown 格式，便于分享"""
+    # 转换为 Markdown 格式
+    md_content = report_text
+    
+    # 添加 Markdown 标题格式
+    md_content = md_content.replace("📰 生物信息学日报", "# 📰 生物信息学日报")
+    md_content = md_content.replace("📝 ", "## 📝 ")
+    md_content = md_content.replace("🔍 精选", "## 🔍 精选")
+    
+    # 保存文件
+    md_file = f"/tmp/bioinfo_daily_{date.replace('/', '')}.md"
+    with open(md_file, 'w', encoding='utf-8') as f:
+        f.write(md_content)
+    
+    return md_file
+
 def main():
     """主函数"""
     print("🔬 正在生成生物信息学日报...\n")
@@ -387,11 +404,25 @@ def main():
     report = generate_daily_report(all_articles, yesterday)
     print("\n" + report)
     
-    # 保存到文件
+    # 保存到文本文件
     output_file = f"/tmp/bioinfo_daily_{yesterday.replace('/', '')}.txt"
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(report)
     print(f"\n📄 日报已保存: {output_file}")
+    
+    # 保存为 Markdown 格式，便于分享
+    md_file = save_markdown_report(report, yesterday)
+    print(f"📥 Markdown 格式: {md_file}")
+    print(f"\n💡 提示: 使用以下命令下载 Markdown 文件:")
+    print(f"   curl -o bioinfo_daily.md file://{md_file}")
+    print(f"   # 或在服务器上直接复制: cp {md_file} ./")
+    
+    # 在报告末尾添加下载链接信息
+    report += f"\n\n{'=' * 60}\n"
+    report += f"📥 文件下载:\n"
+    report += f"   文本格式: {output_file}\n"
+    report += f"   Markdown: {md_file}\n"
+    report += f"{'=' * 60}\n"
     
     return report
 
