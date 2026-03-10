@@ -16,11 +16,11 @@
 ### 1. 安装到 OpenClaw
 
 ```bash
-# 下载 skill 文件
-curl -L -o bioinfo-daily.skill https://github.com/wanglabcsu/bioinfo-daily-skill/releases/latest/download/bioinfo-daily.skill
+# 克隆仓库
+git clone https://github.com/WangLabCSU/bioinfo-daily-skill.git
 
-# 安装到 OpenClaw
-openclaw skills install bioinfo-daily.skill
+# 复制到 OpenClaw skills 目录
+cp -r bioinfo-daily-skill ~/.openclaw/workspace/skills/bioinfo-daily
 ```
 
 ### 2. 配置 PubMed API（重要）
