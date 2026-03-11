@@ -13,8 +13,22 @@ from typing import List, Dict
 import xml.etree.ElementTree as ET
 import time
 
-# PubMed API 配置（从环境变量读取，避免硬编码）
+# PubMed API 配置（从环境变量或 .env 文件读取，避免硬编码）
 import os
+
+# 尝试加载 .env 文件（方式3）
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SKILL_DIR = os.path.dirname(SCRIPT_DIR)
+ENV_FILE = os.path.join(SKILL_DIR, '.env')
+
+if os.path.exists(ENV_FILE):
+    with open(ENV_FILE, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                if key not in os.environ:  # 环境变量优先
+                    os.environ[key] = value
 
 NCBI_EMAIL = os.environ.get("NCBI_EMAIL", "your@email.com")
 NCBI_API_KEY = os.environ.get("NCBI_API_KEY", "")
