@@ -13,9 +13,12 @@ DATE_STR=$(date -d "yesterday" +%Y%m%d)
 echo "🔬 开始生成生物信息学日报..."
 echo "📅 日期: $YESTERDAY"
 
-# 设置环境变量
-export NCBI_EMAIL="${NCBI_EMAIL:-wangshx@csu.edu.cn}"
-export NCBI_API_KEY="${NCBI_API_KEY:-}"
+# 检查环境变量
+if [ -z "$NCBI_EMAIL" ]; then
+    echo "❌ 错误: 未设置 NCBI_EMAIL 环境变量"
+    echo "   请在 ~/.openclaw/openclaw.json 中配置或设置环境变量"
+    exit 1
+fi
 
 if [ -z "$NCBI_API_KEY" ]; then
     echo "❌ 错误: 未设置 NCBI_API_KEY 环境变量"
