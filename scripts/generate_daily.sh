@@ -6,6 +6,14 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(dirname "$SCRIPT_DIR")"
+
+# 加载 .env 文件（如果存在）
+if [ -f "$SKILL_DIR/.env" ]; then
+    source "$SKILL_DIR/.env"
+fi
+
 # 获取日期
 YESTERDAY=$(date -d "yesterday" +%Y/%m/%d)
 DATE_STR=$(date -d "yesterday" +%Y%m%d)
