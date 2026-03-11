@@ -29,9 +29,6 @@
   "engines": {
     "python": ">=3.6"
   },
-  "dependencies": {
-    "requests": "*"
-  },
   "openclaw": {
     "skill": {
       "name": "bioinfo-daily",

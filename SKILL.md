@@ -96,6 +96,28 @@ export NCBI_API_KEY="your_api_key"
 
 - `scripts/pubmed_search.py` - PubMed API 搜索和日报生成
 
+## ⚠️ 安全注意事项
+
+### 1. API Key 配置
+- 必须配置 `NCBI_API_KEY` 才能使用 PubMed API
+- 脚本会在缺少 API Key 时显示警告
+- 获取 API Key: https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/
+
+### 2. .env 文件安全
+- 如果使用 `.env` 文件，只放置 NCBI 相关凭证
+- 不要在同一文件放其他不相关的 secrets
+- `.env` 文件已加入 `.gitignore`，不会提交到 Git
+
+### 3. 网络活动说明
+- `pubmed_search.py`: 直接调用 PubMed API（ncbi.nlm.nih.gov）
+- `search_bioinfo.py`: 调用 OpenClaw 的 `web_search` 工具（会发送到配置的搜索提供商）
+- 如需限制网络访问，可在隔离环境中运行
+
+### 4. 飞书上传（如需自动发布）
+- `generate_daily.sh` 引用飞书文档创建步骤
+- 需要配置飞书 API 凭证才能自动上传
+- 如未配置凭证，脚本会生成文件供手动上传
+
 ## 依赖
 
 - Python 3.6+

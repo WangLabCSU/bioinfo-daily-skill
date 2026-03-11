@@ -56,6 +56,8 @@ NCBI_EMAIL=your@email.com
 NCBI_API_KEY=your_api_key
 ```
 
+> ⚠️ **安全提示**: `.env` 文件只放 NCBI 相关凭证，不要放其他无关的 secrets。该文件已在 `.gitignore` 中，不会提交到 Git。
+
 **获取 API Key**: https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/
 
 ### 3. 设置定时任务
@@ -148,6 +150,23 @@ SEARCH_TOPICS = [
 ## 许可证
 
 MIT License - 详见 [LICENSE](LICENSE) 文件
+
+## ⚠️ 安全注意事项
+
+### 网络活动
+- `pubmed_search.py`: 直接调用 PubMed API（ncbi.nlm.nih.gov）
+- `search_bioinfo.py`: 调用 OpenClaw 的 `web_search` 工具（会发送到外部搜索提供商）
+- 如需限制网络访问，请在隔离环境中运行
+
+### 飞书自动发布
+- `generate_daily.sh` 包含飞书文档创建步骤
+- 需要配置飞书 API 凭证才能自动上传到飞书
+- 如未配置凭证，脚本会生成文件供手动上传
+
+### .env 文件
+- 只放置 NCBI 相关凭证
+- 不要在同一文件放其他不相关的 secrets
+- 已加入 `.gitignore`，不会提交到 Git
 
 ## 致谢
 
