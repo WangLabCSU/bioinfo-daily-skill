@@ -180,6 +180,134 @@ def fetch_article_details(pmids: List[str]) -> List[Dict]:
         print(f"获取文献详情失败: {e}")
         return []
 
+
+
+# ============ 改进的分类和亮点生成 ============
+
+# 分类关键词（标题+摘要）
+CATEGORY_KEYWORDS = {
+    "🧬 生物信息学": ["bioinformatics", "computational", "algorithm", "machine learning", "deep learning", "AI", "neural network", "prediction", "omics", "pipeline"],
+    "🦠 肿瘤免疫": ["immunotherapy", "immune", "checkpoint", "PD-1", "PD-L1", "CTLA-4", "CAR-T", "t cell", "B cell", "macrophage", "tumor microenvironment", "immunosurveillance"],
+    "🔬 单细胞测序": ["single-cell", "single cell", "scRNA", "scRNA-seq", "single nucleus", "cell atlas", "cell heterogeneity"],
+    "🧪 空间转录组": ["spatial transcriptomics", "spatial genomics", "VISIUM", "CODEX", "MIBI", "spatial mapping", "tissue architecture"],
+    "💊 临床进展": ["clinical trial", "phase I", "phase II", "phase III", "therapeutic", "treatment", "therapy", "response", "resistance", "survival"],
+    "🔬 肿瘤生物学": ["tumor", "cancer", "carcinoma", "mutation", "genome", "apoptosis", "proliferation", "metastasis", "oncogene"]
+}
+
+# 癌种关键词
+CANCER_TYPES = {
+    "肺癌": ["lung cancer", "NSCLC", "SCLC", "non-small cell lung"],
+    "乳腺癌": ["breast cancer", "BRCA", "HER2"],
+    "结直肠癌": ["colorectal cancer", "colon cancer", "CRC"],
+    "肝癌": ["hepatocellular carcinoma", "HCC", "liver cancer"],
+    "胃癌": ["gastric cancer", "stomach cancer"],
+    "胰腺癌": ["pancreatic cancer", "PDAC"],
+    "前列腺癌": ["prostate cancer"],
+    "黑色素瘤": ["melanoma"],
+    "食管癌": ["esophageal cancer"],
+    "鼻咽癌": ["nasopharyngeal carcinoma", "NPC"],
+    "淋巴瘤": ["lymphoma"],
+    "白血病": ["leukemia", "AML", "CML"]
+}
+
+# 研究方法
+METHOD_KEYWORDS = {
+    "单细胞": ["single-cell", "single cell", "scRNA"],
+    "空间组学": ["spatial transcriptomics", "VISIUM", "CODEX"],
+    "多组学": ["multi-omics", "integrative", "proteogenomics"],
+    "CRISPR": ["CRISPR", "Cas9", "gene editing"],
+    "类器官": ["organoid", "patient-derived"],
+    "AI模型": ["deep learning", "neural network", "AI"]
+}
+
+def classify_article(title: str, abstract: str) -> set:
+    """基于标题+摘要重新分类"""
+    text = (title + " " + abstract).lower()
+    categories = set()
+    
+    for cat, keywords in CATEGORY_KEYWORDS.items():
+        for kw in keywords:
+            if kw in text:
+                categories.add(cat)
+                break
+    
+    if not categories:
+        categories.add("🔬 肿瘤生物学")
+    
+    return categories
+
+def extract_cancer_type(title: str, abstract: str) -> str:
+    """提取癌症类型"""
+    text = (title + " " + abstract).lower()
+    for cancer, keywords in CANCER_TYPES.items():
+        for kw in keywords:
+            if kw in text:
+                return cancer
+    return None
+
+def extract_methods(title: str, abstract: str) -> list:
+    """提取研究方法"""
+    text = (title + " " + abstract).lower()
+    methods = []
+    for method, keywords in METHOD_KEYWORDS.items():
+        for kw in keywords:
+            if kw in text:
+                methods.append(method)
+                break
+    return methods[:2]
+
+def generate_highlight_v2(article: dict) -> str:
+    """生成专业亮点解读"""
+    title = article.get("title", "")
+    abstract = article.get("abstract", "")
+    journal = article.get("journal", "")
+    categories = article.get("categories", set())
+    
+    cancer = extract_cancer_type(title, abstract)
+    methods = extract_methods(title, abstract)
+    
+    parts = []
+    if cancer:
+        parts.append(f"针对{cancer}")
+    if methods:
+        parts.append(f"使用{'/'.join(methods)}")
+    
+    # 研究内容
+    if "🦠 肿瘤免疫" in categories:
+        if any(k in abstract.lower() for k in ["checkpoint", "PD-1", "PD-L1"]):
+            parts.append("揭示免疫检查点机制")
+        elif "CAR-T" in abstract:
+            parts.append("开发细胞免疫治疗")
+        else:
+            parts.append("解析免疫调控网络")
+    elif "🔬 单细胞测序" in categories:
+        parts.append("绘制单细胞图谱")
+    elif "🧪 空间转录组" in categories:
+        parts.append("解析空间分子特征")
+    elif "🧬 生物信息学" in categories:
+        if "AI" in abstract or "deep learning" in abstract:
+            parts.append("开发AI预测模型")
+        else:
+            parts.append("建立计算分析流程")
+    elif "💊 临床进展" in categories:
+        parts.append("临床治疗新策略")
+    else:
+        if "mutation" in abstract.lower():
+            parts.append("发现新驱动因素")
+        elif "apoptosis" in abstract.lower():
+            parts.append("揭示细胞死亡机制")
+        else:
+            parts.append("肿瘤生物学新发现")
+    
+    # 期刊标记
+    prefix = ""
+    if any(t in journal for t in ["Nature", "Science", "Cell", "Lancet", "JAMA"]):
+        prefix = "【顶刊】"
+    
+    result = "，".join(parts) if parts else "重要研究进展"
+    return (prefix + result)[:45]
+
+
 def filter_high_impact(articles: List[Dict]) -> List[Dict]:
     """筛选高影响力期刊文献"""
     filtered = []
@@ -188,41 +316,15 @@ def filter_high_impact(articles: List[Dict]) -> List[Dict]:
         # 检查是否在高影响力期刊列表中
         for high_impact_journal in HIGH_IMPACT_JOURNALS:
             if high_impact_journal.lower() in journal.lower():
+                # 基于内容重新分类
+                title = article.get("title", "")
+                abstract = article.get("abstract", "")
+                article["categories"] = classify_article(title, abstract)
                 article["journal_tier"] = "High Impact"
                 filtered.append(article)
                 break
     return filtered
 
-def generate_highlight(article: Dict) -> str:
-    """生成中文亮点介绍（30字左右）"""
-    title = article.get("title", "")
-    journal = article.get("journal", "")
-    
-    # 根据标题关键词生成亮点
-    highlights = []
-    
-    if any(kw in title.lower() for kw in ["single-cell", "scRNA", "single cell"]):
-        highlights.append("单细胞技术揭示细胞异质性新机制")
-    elif any(kw in title.lower() for kw in ["spatial", "spatial transcriptomics"]):
-        highlights.append("空间组学解析肿瘤微环境空间结构")
-    elif any(kw in title.lower() for kw in ["immunotherapy", "checkpoint", "CAR-T", "PD-1", "PD-L1"]):
-        highlights.append("免疫治疗新靶点或耐药机制研究")
-    elif any(kw in title.lower() for kw in ["bioinformatics", "algorithm", "machine learning", "deep learning", "AI"]):
-        highlights.append("生物信息学算法或AI模型创新")
-    elif any(kw in title.lower() for kw in ["genomic", "mutation", "variant"]):
-        highlights.append("基因组学发现新生物标志物")
-    elif any(kw in title.lower() for kw in ["clinical trial", "patient", "therapeutic"]):
-        highlights.append("临床试验或治疗策略重要进展")
-    elif any(kw in title.lower() for kw in ["tumor microenvironment", "TME"]):
-        highlights.append("肿瘤微环境调控机制新发现")
-    else:
-        highlights.append("肿瘤生物学重要机制研究")
-    
-    # 根据期刊级别调整
-    if "Nature" in journal or "Science" in journal or "Cell" in journal:
-        highlights[0] = "【顶刊】" + highlights[0]
-    
-    return highlights[0][:35] if highlights else "重要研究进展"
 
 def calculate_innovation_score(article: Dict) -> int:
     """计算文章创新性得分"""
@@ -337,7 +439,7 @@ def generate_daily_report(articles: List[Dict], date: str) -> str:
         report.append(f"## {cat} ({len(cat_articles)} 篇)")
         report.append("")
         for i, article in enumerate(cat_articles, 1):
-            highlight = generate_highlight(article)
+            highlight = generate_highlight_v2(article)
             journal = article.get("journal", "")
             journal_short = journal.split(":")[0] if ":" in journal else journal
             report.append(f"### {i}. {article.get('title', 'N/A')}")
