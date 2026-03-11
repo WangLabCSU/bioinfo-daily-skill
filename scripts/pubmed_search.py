@@ -255,43 +255,10 @@ def calculate_innovation_score(article: Dict) -> int:
     
     return score
 
-def select_diverse_articles(articles: List[Dict], max_count: int = 10) -> List[Dict]:
-    """智能优选：选择创新性强且方向有区分的文章"""
-    if len(articles) <= max_count:
-        return articles
-    
-    # 计算创新性得分
-    for article in articles:
-        article["innovation_score"] = calculate_innovation_score(article)
-    
-    # 按类别分组
-    categories = {}
-    for article in articles:
-        cat = article.get("category", "其他")
-        if cat not in categories:
-            categories[cat] = []
-        categories[cat].append(article)
-    
-    # 每个类别选择得分最高的，确保方向区分
-    selected = []
-    for cat, cat_articles in categories.items():
-        cat_articles.sort(key=lambda x: x["innovation_score"], reverse=True)
-        # 每个类别最多选2篇，确保多样性
-        selected.extend(cat_articles[:2])
-    
-    # 如果还不够，从剩余文章中按得分补充
-    if len(selected) < max_count:
-        remaining = [a for a in articles if a not in selected]
-        remaining.sort(key=lambda x: x["innovation_score"], reverse=True)
-        selected.extend(remaining[:max_count - len(selected)])
-    
-    # 最终排序：顶刊优先，然后按得分
-    selected.sort(key=lambda x: (
-        0 if any(tier in x.get("journal", "").lower() for tier in ["nature", "science", "cell"]) else 1,
-        -x.get("innovation_score", 0)
-    ))
-    
-    return selected[:max_count]
+def select_diverse_articles(articles: List[Dict], max_count: int = 100) -> List[Dict]:
+    """不优选，返回所有筛选出的文献"""
+    # 不做任何筛选，返回全部文献
+    return articles
 
 def generate_summary(articles: List[Dict]) -> str:
     """生成精选文章 summary"""
@@ -330,12 +297,20 @@ def generate_summary(articles: List[Dict]) -> str:
     return "".join(summary_parts)
 
 def generate_daily_report(articles: List[Dict], date: str) -> str:
-    """生成日报"""
+    """生成日报 - 按分类展示所有文献"""
     if not articles:
         return f"📰 生物信息学日报 ({date})\n\n昨日暂无新文献。"
     
-    # 智能优选
-    selected_articles = select_diverse_articles(articles, max_count=10)
+    # 使用全部文献，不做优选
+    all_articles = select_diverse_articles(articles, max_count=100)
+    
+    # 按类别分组
+    categories = {}
+    for article in all_articles:
+        cat = article.get("category", "其他")
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(article)
     
     report = []
     report.append("=" * 60)
@@ -345,26 +320,35 @@ def generate_daily_report(articles: List[Dict], date: str) -> str:
     report.append("")
     
     # 添加 summary
-    summary = generate_summary(selected_articles)
+    summary = generate_summary(all_articles)
     report.append(f"📝 {summary}")
     report.append("")
     
-    report.append(f"🔍 精选 {len(selected_articles)} 篇高影响力文献（从 {len(articles)} 篇中优选）")
+    report.append(f"🔍 共 {len(all_articles)} 篇高影响力文献（全部展示）")
     report.append("")
     
-    for i, article in enumerate(selected_articles, 1):
-        highlight = generate_highlight(article)
-        innovation_tag = "🔥" if article.get("innovation_score", 0) > 25 else ""
-        report.append(f"{i}. {article.get('title', 'N/A')} {innovation_tag}")
-        report.append(f"   📚 {article.get('journal', 'N/A')}")
-        report.append(f"   👤 {article.get('first_author', 'N/A')} et al. | {article.get('year', 'N/A')}")
-        report.append(f"   💡 {highlight}")
-        report.append(f"   🔗 https://pubmed.ncbi.nlm.nih.gov/{article.get('pmid', '')}/")
+    # 按分类展示
+    category_order = ["🧬 生物信息学", "🦠 肿瘤免疫", "🔬 单细胞测序", "🧪 空间转录组", "💊 临床进展"]
+    
+    for cat in category_order:
+        if cat not in categories:
+            continue
+        cat_articles = categories[cat]
+        report.append(f"## {cat} ({len(cat_articles)} 篇)")
         report.append("")
+        for i, article in enumerate(cat_articles, 1):
+            highlight = generate_highlight(article)
+            journal = article.get("journal", "")
+            journal_short = journal.split(":")[0] if ":" in journal else journal
+            report.append(f"### {i}. {article.get('title', 'N/A')}")
+            report.append(f"- 📚 {journal_short}")
+            report.append(f"- 👤 {article.get('first_author', 'N/A')} et al. | {article.get('year', 'N/A')}")
+            report.append(f"- 💡 {highlight}")
+            report.append(f"- 🔗 https://pubmed.ncbi.nlm.nih.gov/{article.get('pmid', '')}/")
+            report.append("")
     
     report.append("=" * 60)
     report.append("📊 数据来源: PubMed | 筛选标准: CNS及Nature Index期刊")
-    report.append("💡 标记🔥为创新性评分>25的高亮点文章")
     report.append("=" * 60)
     
     return "\n".join(report)
