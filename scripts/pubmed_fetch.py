@@ -32,7 +32,7 @@ BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
 # 搜索关键词配置（更宽泛，交给AI分类）
 SEARCH_TOPICS = [
-    ("(cancer[Title/Abstract] OR tumor[Title/Abstract] OR carcinoma[Title/Abstract] OR neoplasm[Title/Abstract]) AND (bioinformatics[Title/Abstract] OR computational[Title/Abstract] OR algorithm[Title/Abstract] OR "machine learning"[Title/Abstract] OR AI[Title/Abstract])", "计算生物学相关"),
+    ("(cancer[Title/Abstract] OR tumor[Title/Abstract] OR carcinoma[Title/Abstract] OR neoplasm[Title/Abstract]) AND (bioinformatics[Title/Abstract] OR computational[Title/Abstract] OR algorithm[Title/Abstract] OR 'machine learning'[Title/Abstract] OR AI[Title/Abstract])", "计算生物学相关"),
     ("(cancer[Title/Abstract] OR tumor[Title/Abstract]) AND (immunotherapy[Title/Abstract] OR immune[Title/Abstract] OR checkpoint[Title/Abstract] OR CAR-T[Title/Abstract] OR T cell[Title/Abstract])", "肿瘤免疫相关"),
     ("(cancer[Title/Abstract] OR tumor[Title/Abstract]) AND (single-cell[Title/Abstract] OR single cell[Title/Abstract] OR scRNA[Title/Abstract])", "单细胞测序相关"),
     ("(cancer[Title/Abstract] OR tumor[Title/Abstract]) AND (spatial[Title/Abstract] OR VISIUM[Title/Abstract] OR spatial transcriptomics[Title/Abstract])", "空间组学相关"),
@@ -178,4 +178,4 @@ def main():
 if __name__ == "__main__":
     main()
 PYEOF
-print "Script v3.0 created!"
+print("Script v3.0 created!")
