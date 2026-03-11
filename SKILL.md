@@ -64,9 +64,29 @@ openclaw cron list
 
 ## 配置
 
-**API 配置**（已内置）:
-- Email: wangshx@csu.edu.cn
-- API Key: add1023100bc6ea695af14b7ff275233cc08
+**API 配置**（使用环境变量）:
+- `NCBI_EMAIL`: 你的邮箱地址
+- `NCBI_API_KEY`: 你的 PubMed API Key
+
+**获取 API Key**: https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/
+
+**配置方式**（任选其一）:
+
+方式 1 - OpenClaw 配置文件 `~/.openclaw/openclaw.json`:
+```json
+{
+  "env": {
+    "NCBI_EMAIL": "your@email.com",
+    "NCBI_API_KEY": "your_api_key"
+  }
+}
+```
+
+方式 2 - 环境变量:
+```bash
+export NCBI_EMAIL="your@email.com"
+export NCBI_API_KEY="your_api_key"
+```
 
 **定时任务**:
 - 执行时间：每天早上 8:00（北京时间）
